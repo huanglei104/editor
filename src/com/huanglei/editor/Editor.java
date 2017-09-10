@@ -356,7 +356,6 @@ class Editor extends JFrame {
             textPane.setSelectionStart(index);
             textPane.setSelectionEnd(index + findString.length());
             textPane.setSelectionColor(Color.PINK);
-
         }
         private void replace(){
             String replaceString = jtfReplace.getText();
