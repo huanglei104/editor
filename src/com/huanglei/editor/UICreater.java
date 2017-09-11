@@ -62,7 +62,6 @@ public class UICreater {
     public JDialog createFindDialog(){
         JDialog findDialog = new JDialog(editor);
         findDialog.setLayout(new GridLayout(4,1));
-        findDialog.setBounds(100,100,200,150);
         findDialog.setTitle("Find and Replace");
         findDialog.add(new JTextField());
         findDialog.add(new JTextField());
@@ -72,8 +71,9 @@ public class UICreater {
     }
     public JDialog createTextDialog(){
         JDialog textDialog = new JDialog(editor);
+        textDialog.setModal(true);
+        textDialog.setTitle("Text setting");
         textDialog.setLayout(new GridLayout(3,2));
-        textDialog.setBounds(100,100,300,120);
         textDialog.add(new JLabel("Size"));
         JComboBox textSize = new JComboBox<>();
         for(int i = 12;i<24;i+=2) textSize.addItem(String.valueOf(i));

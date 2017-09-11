@@ -58,10 +58,16 @@ public class EventHandler extends WindowAdapter implements ActionListener,Docume
         if(comm.equals("Paste")) textHandle("paste");
         if(comm.equals("Cut")) textHandle("cut");
         if(comm.equals("Delete")) textHandle("delete");
-        if(comm.equals("Find")) editor.findDialog.setVisible(true);
+        if(comm.equals("Find")) {
+            editor.findDialog.setBounds(300,300,250,150);
+            editor.findDialog.setVisible(true);
+        }
         if(comm.equals("Next")) findNext();
         if(comm.equals("Replace")) replace();
-        if(comm.equals("Text")) editor.textDialog.setVisible(true);
+        if(comm.equals("Text")) {
+            editor.textDialog.setBounds(300,300,250,100);
+            editor.textDialog.setVisible(true);
+        }
         if(comm.equals("Select")) selectColor();
     }
 
@@ -130,15 +136,14 @@ public class EventHandler extends WindowAdapter implements ActionListener,Docume
 
     public void itemStateChanged(ItemEvent e) {
         JTextPane textPane = (JTextPane) editor.getContentPane().getComponent(0);
-        JComboBox source = (JComboBox)e.getSource();
         Font oldFont = textPane.getFont();
-        Font newFont = null;
+        Font newFont;
 
         JComboBox jcb = (JComboBox) editor.textDialog.getContentPane().getComponent(1);
         Object size = jcb.getSelectedItem();
         JComboBox jcb2 = (JComboBox) editor.textDialog.getContentPane().getComponent(5);
         Object font = jcb2.getSelectedItem();
-        if(size == null && size == null) return;
+        if(size == null && font == null) return;
         newFont = new Font((String)font,oldFont.getStyle(),Integer.valueOf((String)size));
         textPane.setFont(newFont);
     }
@@ -172,7 +177,7 @@ public class EventHandler extends WindowAdapter implements ActionListener,Docume
             e.printStackTrace();
         }
     }
-    public File openFile(){
+    private File openFile(){
         JFileChooser chooser = new JFileChooser();
         chooser.setDialogTitle("Open file");
         int select = chooser.showOpenDialog(editor);
@@ -184,13 +189,17 @@ public class EventHandler extends WindowAdapter implements ActionListener,Docume
         if(!isClean){
             int select = JOptionPane.showConfirmDialog(editor,"Save file ?");
             if(select == JOptionPane.YES_OPTION) {
-                if(!saveFile(editor.getBuffer())) return false;
+                if(editor.hasBuffer()) {
+                    if(!saveFile(editor.getBuffer())) return false;
+                } else {
+                    if(!saveAs()) return false;
+                }
                 editor.setFileStatus(true);
             }else if(select == JOptionPane.CANCEL_OPTION) return false;
         }
         editor.setBuffer(null);
         editor.setText("");
-        editor.setFilePath("");
+        editor.setFilePath("No file");
         return true;
     }
     private boolean saveFile(File file){
@@ -200,6 +209,7 @@ public class EventHandler extends WindowAdapter implements ActionListener,Docume
             fos.write(content);
             fos.flush();
             fos.close();
+            editor.setFilePath("No file");
             return true;
         }catch (Exception e){
             e.printStackTrace();
@@ -208,6 +218,7 @@ public class EventHandler extends WindowAdapter implements ActionListener,Docume
     }
     private boolean save(){
         boolean isClean = editor.getStatus();
+        if(isClean) return true;
         if(!editor.hasBuffer()) return saveAs();
         return saveFile(editor.getBuffer());
     }
@@ -283,7 +294,9 @@ public class EventHandler extends WindowAdapter implements ActionListener,Docume
     private void selectColor(){
         Color color = JColorChooser.showDialog(editor,"Select a color",Color.BLACK);
         if(color == null) return;
-        editor.getContentPane().setForeground(color);
+        JTextPane textPane = (JTextPane)editor.getContentPane().getComponent(0);
+        textPane.setForeground(color);
+        coloring(textPane.getText(),0,textPane.getText().length());
     }
 
 }

@@ -10,10 +10,11 @@ public class MyEditor extends JFrame {
     private File buffer = null;
     public JDialog findDialog;
     public JDialog textDialog;
+    UICreater uiCreater;
     public MyEditor(){
         this.setBounds(150,100, 600, 500);
         this.setLayout(new BorderLayout());
-        UICreater uiCreater = new UICreater(this);
+        uiCreater = new UICreater(this);
         uiCreater.createMenuBar();
         uiCreater.createPane();
         uiCreater.createStatueBar();
