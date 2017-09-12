@@ -61,6 +61,7 @@ public class UICreater {
     }
     public JDialog createFindDialog(){
         JDialog findDialog = new JDialog(editor);
+        findDialog.setBounds(200,200,250,150);
         findDialog.setLayout(new GridLayout(4,1));
         findDialog.setTitle("Find and Replace");
         findDialog.add(new JTextField());
@@ -71,6 +72,7 @@ public class UICreater {
     }
     public JDialog createTextDialog(){
         JDialog textDialog = new JDialog(editor);
+        textDialog.setBounds(200,200,250,100);
         textDialog.setModal(true);
         textDialog.setTitle("Text setting");
         textDialog.setLayout(new GridLayout(3,2));

@@ -59,14 +59,20 @@ public class EventHandler extends WindowAdapter implements ActionListener,Docume
         if(comm.equals("Cut")) textHandle("cut");
         if(comm.equals("Delete")) textHandle("delete");
         if(comm.equals("Find")) {
-            editor.findDialog.setBounds(300,300,250,150);
+            int x = editor.findDialog.getParent().getX();
+            int y = editor.findDialog.getParent().getY();
+            editor.findDialog.setBounds(x+200,y+200,250,150);
             editor.findDialog.setVisible(true);
+            editor.repaint();
         }
         if(comm.equals("Next")) findNext();
         if(comm.equals("Replace")) replace();
         if(comm.equals("Text")) {
-            editor.textDialog.setBounds(300,300,250,100);
+            int x = editor.textDialog.getParent().getX();
+            int y = editor.textDialog.getParent().getY();
+            editor.textDialog.setBounds(x+200,y+200,250,100);
             editor.textDialog.setVisible(true);
+            editor.repaint();
         }
         if(comm.equals("Select")) selectColor();
     }
@@ -274,13 +280,12 @@ public class EventHandler extends WindowAdapter implements ActionListener,Docume
         textPane.setSelectionColor(Color.PINK);
     }
     private void replace(){
+        if(index < 0) return;
         JTextField tf = (JTextField)editor.findDialog.getContentPane().getComponent(1);
-        JTextPane textPane = (JTextPane) editor.getContentPane().getComponent(0);
         String replaceString = tf.getText();
-        if(replaceString == null || replaceString.equals("") || index < 0 ) return;
-        textPane.setSelectionStart(index);
-        textPane.setSelectionEnd(index + replaceString.length()-1);
+        JTextPane textPane = (JTextPane) editor.getContentPane().getComponent(0);
         textPane.replaceSelection(replaceString);
+        findNext();
     }
     private boolean isClass(String clazz){
         for(String pkg:pkgs){
@@ -298,5 +303,4 @@ public class EventHandler extends WindowAdapter implements ActionListener,Docume
         textPane.setForeground(color);
         coloring(textPane.getText(),0,textPane.getText().length());
     }
-
 }
