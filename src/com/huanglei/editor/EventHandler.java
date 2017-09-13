@@ -22,10 +22,13 @@ public class EventHandler extends WindowAdapter implements ActionListener,Docume
             "java.math.","java.net.","java.nio","java.sql,","java.text,","java.time.","java.util.","javax.swing.","javax.swing.text."};
     private static int index = -1;
 
+    private JTextPane textPane;
+
     private MyEditor editor;
     public EventHandler(MyEditor editor){
         this.editor = editor;
         editor.addWindowListener(this);
+        textPane = (JTextPane) editor.getContentPane().getComponent(0);
         int menuCount = editor.getJMenuBar().getMenuCount();
         for(int i=0;i<menuCount;i++){
             int itemCount = editor.getJMenuBar().getMenu(i).getItemCount();
@@ -33,7 +36,6 @@ public class EventHandler extends WindowAdapter implements ActionListener,Docume
                 editor.getJMenuBar().getMenu(i).getItem(j).addActionListener(this);
             }
         }
-        JTextPane textPane = (JTextPane)editor.getContentPane().getComponent(0);
         textPane.getStyledDocument().addDocumentListener(this);
         for(int i = 2;i < 4;i++){
             JButton btn = (JButton) editor.findDialog.getContentPane().getComponent(i);
@@ -49,10 +51,18 @@ public class EventHandler extends WindowAdapter implements ActionListener,Docume
 
     public void actionPerformed(ActionEvent e) {
         String comm = e.getActionCommand();
-        if(comm.equals("Open")) open();
-        if(comm.equals("Close")) close();
-        if(comm.equals("Save")) save();
-        if(comm.equals("Save as")) saveAs();
+        if(comm.equals("Open")) {
+            if(open()) editor.setFileStatus(true);
+        }
+        if(comm.equals("Close")) {
+            if(close()) editor.setFileStatus(true);
+        }
+        if(comm.equals("Save")) {
+            if(save()) editor.setFileStatus(true);
+        }
+        if(comm.equals("Save as")) {
+            if(saveAs()) editor.setFileStatus(true);
+        }
         if(comm.equals("Quit")) quit();
         if(comm.equals("Copy")) textHandle("copy");
         if(comm.equals("Paste")) textHandle("paste");
@@ -63,7 +73,6 @@ public class EventHandler extends WindowAdapter implements ActionListener,Docume
             int y = editor.findDialog.getParent().getY();
             editor.findDialog.setBounds(x+200,y+200,250,150);
             editor.findDialog.setVisible(true);
-            editor.repaint();
         }
         if(comm.equals("Next")) findNext();
         if(comm.equals("Replace")) replace();
@@ -72,18 +81,22 @@ public class EventHandler extends WindowAdapter implements ActionListener,Docume
             int y = editor.textDialog.getParent().getY();
             editor.textDialog.setBounds(x+200,y+200,250,100);
             editor.textDialog.setVisible(true);
-            editor.repaint();
         }
         if(comm.equals("Select")) selectColor();
     }
 
     public void insertUpdate(DocumentEvent e) {
-        if(editor.getStatus()) editor.setFileStatus(false);
         String fullString = editor.getText();
         int fullLen = fullString.length();
+        if(e.getLength() == fullLen) {
+            coloring(textPane.getText(),0,textPane.getText().length());
+            return;   //说明是打开一个文件
+        }
+        if(editor.getStatus()) editor.setFileStatus(false);
         int offset = e.getOffset();
         int start;
         int end;
+        if(fullString.charAt(offset) == '.') return;
         if(offset == 0) {
             if(fullString.charAt(0) == ' ') return;
             start = 0;
@@ -96,7 +109,7 @@ public class EventHandler extends WindowAdapter implements ActionListener,Docume
             if(i == 0) start = i;
             else start = i+1;
         }
-        int i = offset;
+        int i = offset + e.getLength() -1;
         if(fullString.charAt(offset) == ' ') i++;
         while(fullString.charAt(i) != ' ' && i !=fullLen-1) i++;
         if(i == fullLen-1) end = i;
@@ -118,6 +131,7 @@ public class EventHandler extends WindowAdapter implements ActionListener,Docume
         else {
             if(fullString.charAt(offset) == ' ') {
                 int i = offset - 1;
+                if(i < 0 ) return;
                 while(fullString.charAt(i) == ' ') i--;
                 end = i;
                 while(fullString.charAt(i) != ' ' && i != 0) i--;
@@ -141,7 +155,6 @@ public class EventHandler extends WindowAdapter implements ActionListener,Docume
     public void windowClosing(WindowEvent e) { quit(); }
 
     public void itemStateChanged(ItemEvent e) {
-        JTextPane textPane = (JTextPane) editor.getContentPane().getComponent(0);
         Font oldFont = textPane.getFont();
         Font newFont;
 
@@ -155,22 +168,21 @@ public class EventHandler extends WindowAdapter implements ActionListener,Docume
     }
 
     private void textHandle(String str){
-        JTextPane textPane = (JTextPane)editor.getContentPane().getComponent(0);
         if(str.equals("copy")) textPane.copy();
         if(str.equals("cut") || str.equals("delete")) textPane.cut();
         if(str.equals("paste")) textPane.paste();
     }
-    private void open(){
+    private boolean open(){
         boolean isClean = editor.getStatus();
         if(!isClean) {
             int select = JOptionPane.showConfirmDialog(editor,"Save file ?");
             if(select == JOptionPane.YES_OPTION) {
-                if(!save()) return;
+                if(!save()) return false;
                 editor.setFileStatus(true);
-            }else if(select == JOptionPane.CANCEL_OPTION) return;
+            }else if(select == JOptionPane.CANCEL_OPTION) return false;
         }
         File file = openFile();
-        if(file == null) return;
+        if(file == null) return false;
         try{
             StringBuilder fileContent = new StringBuilder("");
             FileInputStream fis = new FileInputStream((file));
@@ -179,8 +191,11 @@ public class EventHandler extends WindowAdapter implements ActionListener,Docume
             editor.setText(new String(fileContent));
             if(!editor.hasBuffer()) editor.setBuffer(file);
             editor.setFilePath(file.getAbsolutePath());
+            coloring(textPane.getText(),0,textPane.getText().length());
+            return true;
         }catch (Exception e){
             e.printStackTrace();
+            return false;
         }
     }
     private File openFile(){
@@ -245,30 +260,32 @@ public class EventHandler extends WindowAdapter implements ActionListener,Docume
     }
 
     private void coloring(String string,int start,int len){
-        JTextPane textPane = (JTextPane)editor.getContentPane().getComponent(0);
         Style style = textPane.getStyledDocument().addStyle("myStyle",null);
         Style normalStyle = textPane.getStyledDocument().addStyle("normalStyle",null);
         Style classStyle = textPane.getStyledDocument().addStyle("classStyle",null);
         StyleConstants.setForeground(style,Color.BLUE);
         StyleConstants.setForeground(classStyle,Color.RED);
         StyleConstants.setForeground(normalStyle,textPane.getForeground());
-        String[] keyWord = string.substring(start,len).split(" ");
+        String[] keyWord = string.substring(start,len).split("[\\s+.]");
         for(String check:keyWord){
-            for(String keyword:keywords){
-                final int _start = string.indexOf(check,start);
-                final int _len = check.length();
-                if(check.equals(keyword)){
-                    EventQueue.invokeLater(()->textPane.getStyledDocument().setCharacterAttributes(_start,_len,style,true));
-                    break;
-                }else if(isClass(check)){
-                    EventQueue.invokeLater(()->textPane.getStyledDocument().setCharacterAttributes(_start,_len,classStyle,true));
-                }else EventQueue.invokeLater(()->textPane.getStyledDocument().setCharacterAttributes(_start,_len,normalStyle,true));
-            }
+            final int _start = string.indexOf(check,start);
+            final int _len = check.length();
+            if(isKeyWork(check)) EventQueue.invokeLater(()->textPane.getStyledDocument().setCharacterAttributes(_start,_len,style,true));
+            else if(isClass(check)) EventQueue.invokeLater(()->textPane.getStyledDocument().setCharacterAttributes(_start,_len,classStyle,true));
+            else EventQueue.invokeLater(()->textPane.getStyledDocument().setCharacterAttributes(_start,_len,normalStyle,true));
+            start += check.length() + 1;
         }
+    }
+
+    public boolean isKeyWork(String word){
+        for(String keyWork:keywords){
+            if(word.equals(keyWork)) return true;
+            else continue;
+        }
+        return false;
     }
     private void findNext(){
         JTextField tf = (JTextField)editor.findDialog.getContentPane().getComponent(0);
-        JTextPane textPane = (JTextPane) editor.getContentPane().getComponent(0);
         String findString = tf.getText();
         String fullString = editor.getText();
         if(findString == null || findString.equals("")|| fullString.equals("")) return;
@@ -283,7 +300,6 @@ public class EventHandler extends WindowAdapter implements ActionListener,Docume
         if(index < 0) return;
         JTextField tf = (JTextField)editor.findDialog.getContentPane().getComponent(1);
         String replaceString = tf.getText();
-        JTextPane textPane = (JTextPane) editor.getContentPane().getComponent(0);
         textPane.replaceSelection(replaceString);
         findNext();
     }
@@ -299,7 +315,6 @@ public class EventHandler extends WindowAdapter implements ActionListener,Docume
     private void selectColor(){
         Color color = JColorChooser.showDialog(editor,"Select a color",Color.BLACK);
         if(color == null) return;
-        JTextPane textPane = (JTextPane)editor.getContentPane().getComponent(0);
         textPane.setForeground(color);
         coloring(textPane.getText(),0,textPane.getText().length());
     }
